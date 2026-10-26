@@ -5,7 +5,7 @@ import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { auth } from './firebase';
 import { RepoFirestore } from './repo-firestore';
 import { fechaLocal } from './format';
-import { aviso, cerrarPanelSuperior, hayPanelAbierto, icono, mensajeError, type Contexto } from './ui/comun';
+import { aviso, cerrarPanelSuperior, h, hayPanelAbierto, icono, mensajeError, type Contexto } from './ui/comun';
 import { pantallaRegistrar } from './ui/registrar';
 import { pantallaHistorial } from './ui/historial';
 import { pantallaGraficos, salirDeGraficos } from './ui/graficos';
@@ -70,16 +70,25 @@ async function entrar(usuario: User): Promise<void> {
   document.body.classList.remove('sin-sesion');
   titulo.textContent = 'Cargando…';
   contenedor.replaceChildren();
-  repo = new RepoFirestore(usuario.uid);
-  repo.alError = (m) => aviso(m, true);
-  repo.alEstado = (e) => { pendienteSync = e.pendiente; pintarEstado(); };
-  repo.alCambiarRemoto = () => { if (puedeRefrescar()) dibujar(); else refrescoPendiente = true; };
+  const esteRepo = new RepoFirestore(usuario.uid);
+  repo = esteRepo;
+  esteRepo.alError = (m) => aviso(m, true);
+  esteRepo.alEstado = (e) => { pendienteSync = e.pendiente; pintarEstado(); };
+  esteRepo.alCambiarRemoto = () => { if (puedeRefrescar()) dibujar(); else refrescoPendiente = true; };
+
+  // La primera vez en un equipo hay que bajar los datos: si tarda, explicar por qué.
+  const esperaLarga = setTimeout(() => {
+    if (repo === esteRepo) mostrarEsperaLarga(contenedor, usuario.email ?? '');
+  }, 10_000);
   try {
-    await repo.iniciar();
+    await esteRepo.iniciar();
   } catch (e) {
-    contenedor.textContent = 'No se pudieron leer tus datos: ' + mensajeError(e);
+    clearTimeout(esperaLarga);
+    if (repo === esteRepo) mostrarError(contenedor, 'No se pudieron leer tus datos: ' + mensajeError(e));
     return;
   }
+  clearTimeout(esperaLarga);
+  if (repo !== esteRepo) return; // se cerró sesión mientras cargaba
   ctx = {
     repo,
     hoy: () => fechaLocal(),
@@ -92,6 +101,39 @@ async function entrar(usuario: User): Promise<void> {
   pintarEstado();
   await dibujar();
   await ofrecerMigracion(ctx);
+}
+
+function botonCerrarSesion(): HTMLButtonElement {
+  return h('button', { class: 'boton', type: 'button', onclick: () => signOut(auth) }, 'Cerrar sesión');
+}
+
+function mostrarEsperaLarga(cont: HTMLElement, correo: string): void {
+  titulo.textContent = 'Conectando…';
+  cont.replaceChildren(
+    h('div', { class: 'pantalla pila' },
+      h('div', { class: 'tarjeta pila' },
+        h('p', { class: 'subtitulo' }, 'Esto está tardando más de lo normal'),
+        h('p', { class: 'texto-2' },
+          `La sesión de ${correo} está iniciada, pero aún no llegan tus datos. La primera vez en un equipo se necesita internet. ` +
+          'Si tienes conexión y sigue así, puede que la base de datos de Firebase no esté creada o esté mal configurada.'),
+        h('button', { class: 'boton primario', type: 'button', onclick: () => location.reload() }, 'Reintentar'),
+        botonCerrarSesion(),
+      ),
+    ),
+  );
+}
+
+function mostrarError(cont: HTMLElement, mensaje: string): void {
+  titulo.textContent = 'Error';
+  cont.replaceChildren(
+    h('div', { class: 'pantalla pila' },
+      h('div', { class: 'tarjeta pila' },
+        h('p', { class: 'error-texto' }, mensaje),
+        h('button', { class: 'boton primario', type: 'button', onclick: () => location.reload() }, 'Reintentar'),
+        botonCerrarSesion(),
+      ),
+    ),
+  );
 }
 
 function salir(): void {

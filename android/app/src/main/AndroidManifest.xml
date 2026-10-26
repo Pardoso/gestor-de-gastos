@@ -35,5 +35,6 @@
         </provider>
     </application>
 
-    <!-- Sin permiso de INTERNET: la app nunca envía datos fuera del teléfono. -->
+    <!-- INTERNET: para sincronizar los gastos con tu cuenta de Firebase. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>

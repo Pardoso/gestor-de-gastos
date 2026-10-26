@@ -9,6 +9,8 @@ export interface Contexto {
   hoy: () => string;
   /** Avisar que cambiaron los datos (para que otras pantallas se refresquen). */
   cambio: () => Promise<void>;
+  /** Cuenta con la que se inició sesión. */
+  cuenta?: { correo: string; cerrarSesion: () => Promise<void> };
 }
 
 type Hijo = Node | string | null | undefined | false;

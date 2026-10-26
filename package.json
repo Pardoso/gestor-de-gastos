@@ -11,13 +11,13 @@
     "android": "npm run build && npx cap sync android && npx cap open android"
   },
   "dependencies": {
-    "@capacitor-community/sqlite": "^8.1.1",
     "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
     "@capacitor/filesystem": "^8.1.5",
     "@capacitor/share": "^8.0.3",
-    "chart.js": "^4.6.1"
+    "chart.js": "^4.6.1",
+    "firebase": "^13.1.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.3",

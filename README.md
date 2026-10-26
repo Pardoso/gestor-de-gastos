@@ -1,7 +1,28 @@
 # Control de Gastos (Android)
 
-App para registrar gastos en segundos y verlos en gráficos. Funciona entera dentro del teléfono:
-sin servidor, sin cuenta y sin internet. Hecha según el documento *Arquitectura App de Control de Gastos (Android)*.
+App para registrar gastos en segundos y verlos en gráficos. Hecha según el documento
+*Arquitectura App de Control de Gastos (Android)*, con un cambio: los gastos se sincronizan entre
+equipos con **Firebase Firestore**. Funciona sin internet y sube los cambios al reconectarse.
+
+Versión web: https://pardoso.github.io/gestor-de-gastos/
+
+## Firebase
+
+- Proyecto: `gestor-de-gastossp` (configuración en `src/firebase.ts`, no es secreta).
+- Inicio de sesión con correo y contraseña. Las cuentas se crean en la consola de Firebase
+  (Authentication → Usuarios), no desde la app.
+- Datos en `usuarios/{uid}/categorias` y `usuarios/{uid}/gastos`. Reglas de Firestore:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /usuarios/{uid}/{documento=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
+```
 
 ## Probar en el PC
 
@@ -10,8 +31,8 @@ npm install        # solo la primera vez
 npm run dev        # abre http://localhost:5173
 ```
 
-En el navegador los datos se guardan en el propio navegador (no en SQLite).
-En **Ajustes → Cargar datos de ejemplo** hay 6 meses de gastos de prueba (solo aparece en modo desarrollo).
+En PowerShell usa `npm.cmd` en vez de `npm`, o haz doble clic en `iniciar.bat`.
+Al subir cambios a `main`, GitHub Actions publica la versión web sola.
 
 ```bash
 npm test           # pruebas de cálculos y respaldo (Vitest)
@@ -35,10 +56,11 @@ Atajo para los pasos 1 a 3: `npm run android`.
 
 | Archivo | Qué hace |
 |---|---|
-| `src/main.ts` | Arranque: elige el repositorio (SQLite en el teléfono, navegador en el PC) y la navegación |
+| `src/main.ts` | Arranque: sesión, repositorio y navegación |
 | `src/types.ts` | Tipos: Gasto, Categoria, ResumenKpi |
-| `src/repo.ts` | Interfaz `Repositorio`, validaciones y la versión para navegador |
-| `src/db.ts` | `Repositorio` con SQLite (consultas con parámetros) |
+| `src/repo.ts` | Interfaz `Repositorio`, validaciones y una versión local (usada en las pruebas) |
+| `src/firebase.ts` | Conexión a Firebase con copia local para funcionar sin internet |
+| `src/repo-firestore.ts` | `Repositorio` sobre Firestore, con cambios en tiempo real |
 | `src/stats.ts` | Cálculos puros: por mes, semana ISO, categoría, KPIs |
 | `src/format.ts` | Formato `$1.234.567` y fechas es-CL |
 | `src/backup.ts` | Exportar JSON/CSV por el menú Compartir; importar, reemplazando o combinando |
@@ -47,6 +69,6 @@ Atajo para los pasos 1 a 3: `npm run android`.
 
 ## Notas
 
-- El manifiesto de Android **no tiene permiso de internet**: la app no puede enviar datos fuera del teléfono.
-- Los datos viven solo en el teléfono. **Exporta el respaldo JSON** de vez en cuando (la app avisa a los 30 días).
+- El APK necesita el permiso de internet para sincronizar con Firebase.
+- El respaldo JSON sigue disponible como copia extra (la app avisa a los 30 días sin respaldo).
 - El respaldo incluye un número de versión. Si cambian las tablas, la migración se agrega en `migrar()` de `backup.ts`.

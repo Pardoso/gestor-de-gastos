@@ -48,10 +48,21 @@ export async function abrirAjustes(ctx: Contexto): Promise<void> {
     ),
   );
 
+  const cuenta = ctx.cuenta;
   const contenido = h('div', { class: 'pila-grande' },
+    cuenta && h('section', { class: 'pila' },
+      h('h3', { class: 'subtitulo' }, 'Cuenta'),
+      h('p', { class: 'texto-2 chico' }, `Sesión iniciada como ${cuenta.correo}.`),
+      h('button', { class: 'boton', type: 'button', onclick: async () => {
+        cerrar();
+        if (await confirmar('¿Cerrar sesión?', 'Tus gastos quedan guardados en tu cuenta. Para verlos de nuevo tendrás que iniciar sesión.', 'Cerrar sesión')) {
+          try { await cuenta.cerrarSesion(); } catch (e) { aviso(mensajeError(e), true); }
+        }
+      } }, 'Cerrar sesión'),
+    ),
     h('section', { class: 'pila' },
       h('h3', { class: 'subtitulo' }, 'Respaldo'),
-      h('p', { class: 'texto-2 chico' }, `Tus datos solo viven en este teléfono. Último respaldo: ${formatoFecha(prefs.ultimoRespaldo(), Number(hoy.slice(0, 4)))}.`),
+      h('p', { class: 'texto-2 chico' }, `Tus gastos se sincronizan con tu cuenta. El respaldo es una copia extra por si acaso. Último respaldo: ${formatoFecha(prefs.ultimoRespaldo(), Number(hoy.slice(0, 4)))}.`),
       h('button', { class: 'boton primario', type: 'button', onclick: () => exportarComo('json') }, 'Exportar respaldo (JSON)'),
       h('button', { class: 'boton', type: 'button', onclick: () => exportarComo('csv') }, 'Exportar para Excel (CSV)'),
       h('button', { class: 'boton', type: 'button', onclick: () => archivo.click() }, 'Importar respaldo'),
@@ -66,20 +77,12 @@ export async function abrirAjustes(ctx: Contexto): Promise<void> {
       h('h3', { class: 'subtitulo' }, 'Zona de cuidado'),
       h('button', { class: 'boton peligro-texto', type: 'button', onclick: async () => {
         cerrar();
-        if (await confirmar('¿Borrar todos los gastos?', 'Se borran todos los gastos de este teléfono. Las categorías se mantienen. Exporta un respaldo antes si lo necesitas.', 'Borrar todo', true)) {
+        if (await confirmar('¿Borrar todos los gastos?', 'Se borran todos los gastos de tu cuenta, en todos tus equipos. Las categorías se mantienen. Exporta un respaldo antes si lo necesitas.', 'Borrar todo', true)) {
           await ctx.repo.reemplazarTodo({ categorias: await ctx.repo.listarCategorias(), gastos: [] });
           aviso('Gastos borrados');
           await ctx.cambio();
         }
       } }, 'Borrar todos los gastos'),
-      import.meta.env.DEV &&
-        h('button', { class: 'boton', type: 'button', onclick: async () => {
-          cerrar();
-          const { datosDemo } = await import('../demo');
-          await ctx.repo.reemplazarTodo(datosDemo(hoy, await ctx.repo.listarCategorias()));
-          aviso('Datos de ejemplo cargados (6 meses)');
-          await ctx.cambio();
-        } }, 'Cargar datos de ejemplo (solo desarrollo)'),
     ),
   );
   const cerrar = abrirPanel('Ajustes', contenido);

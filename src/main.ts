@@ -84,7 +84,7 @@ async function entrar(usuario: User): Promise<void> {
     await esteRepo.iniciar();
   } catch (e) {
     clearTimeout(esperaLarga);
-    if (repo === esteRepo) mostrarError(contenedor, 'No se pudieron leer tus datos: ' + mensajeError(e));
+    if (repo === esteRepo) mostrarError(contenedor, 'No se pudieron leer tus datos: ' + mensajeError(e), usuario.uid);
     return;
   }
   clearTimeout(esperaLarga);
@@ -123,12 +123,13 @@ function mostrarEsperaLarga(cont: HTMLElement, correo: string): void {
   );
 }
 
-function mostrarError(cont: HTMLElement, mensaje: string): void {
+function mostrarError(cont: HTMLElement, mensaje: string, uid?: string): void {
   titulo.textContent = 'Error';
   cont.replaceChildren(
     h('div', { class: 'pantalla pila' },
       h('div', { class: 'tarjeta pila' },
         h('p', { class: 'error-texto' }, mensaje),
+        uid ? h('p', { class: 'texto-2 chico' }, `Tu UID: ${uid}`) : null,
         h('button', { class: 'boton primario', type: 'button', onclick: () => location.reload() }, 'Reintentar'),
         botonCerrarSesion(),
       ),

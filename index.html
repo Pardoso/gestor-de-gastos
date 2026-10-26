@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es-CL">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0F766E" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#111416" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Control de Gastos</title>
+  </head>
+  <body>
+    <header class="cabecera">
+      <h1 id="titulo">Registrar</h1>
+      <button id="btn-ajustes" class="boton-icono" type="button" aria-label="Ajustes y respaldo"></button>
+    </header>
+    <main id="vista" tabindex="-1"></main>
+    <nav class="barra" aria-label="Pantallas">
+      <a href="#registrar" data-vista="registrar">Registrar</a>
+      <a href="#historial" data-vista="historial">Historial</a>
+      <a href="#graficos" data-vista="graficos">Gráficos</a>
+    </nav>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
